@@ -1,65 +1,132 @@
-import java.io.FileWriter;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
 
-public class Assignment4 {
+// Custom Exception
+class BankException extends Exception {
+    BankException(String msg) {
+        super(msg);
+    }
+}
+
+// Customer Class
+class Customer {
+    int cid;
+    String cname;
+    double amount;
+
+    Customer(int cid, String cname, double amount) throws BankException {
+        if (cid < 1 || cid > 20)
+            throw new BankException("CID must be between 1 and 20");
+
+        if (amount < 1000)
+            throw new BankException("Minimum balance must be 1000");
+
+        this.cid = cid;
+        this.cname = cname;
+        this.amount = amount;
+    }
+
+    void deposit(double amt) throws BankException {
+        if (amt <= 0)
+            throw new BankException("Deposit must be positive");
+        amount += amt;
+    }
+
+    void withdraw(double amt) throws BankException {
+        if (amt > amount)
+            throw new BankException("Insufficient balance");
+        amount -= amt;
+    }
+
+    void display() {
+        System.out.println(cid + " " + cname + " " + amount);
+    }
+}
+
+// 🔥 MAIN CLASS (IMPORTANT NAME)
+public class Main {
+
     public static void main(String[] args) {
+
         Scanner sc = new Scanner(System.in);
+        ArrayList<Customer> list = new ArrayList<>();
 
-        int cid;
-        String name;
-        double balance;
+        int choice;
 
-        System.out.print("Enter CID (1-20): ");
-        cid = sc.nextInt();
+        do {
+            System.out.println("\n1.Create\n2.Deposit\n3.Withdraw\n4.Display\n5.Exit");
+            choice = sc.nextInt();
 
-        if (cid < 1 || cid > 20) {
-            System.out.println("Invalid CID");
-            return;
-        }
+            try {
+                switch (choice) {
 
-        System.out.print("Enter Name: ");
-        name = sc.next();
+                    case 1:
+                        System.out.print("Enter CID: ");
+                        int cid = sc.nextInt();
 
-        System.out.print("Enter Amount (>=1000): ");
-        balance = sc.nextDouble();
+                        if (findCustomer(list, cid) != null)
+                            throw new BankException("Duplicate CID");
 
-        if (balance < 1000) {
-            System.out.println("Minimum balance is 1000");
-            return;
-        }
+                        System.out.print("Enter Name: ");
+                        String name = sc.next();
 
-        while (true) {
-            System.out.println("\n1.Deposit 2.Withdraw 3.Display 4.Exit");
-            int choice = sc.nextInt();
+                        System.out.print("Enter Amount: ");
+                        double amt = sc.nextDouble();
 
-            if (choice == 1) {
-                System.out.print("Enter deposit: ");
-                double d = sc.nextDouble();
-                if (d > 0) balance += d;
-                else System.out.println("Invalid amount");
+                        Customer c = new Customer(cid, name, amt);
+                        list.add(c);
 
-            } else if (choice == 2) {
-                System.out.print("Enter withdraw: ");
-                double w = sc.nextDouble();
-                if (w > balance) System.out.println("Insufficient balance");
-                else balance -= w;
+                        System.out.println("Account created!");
+                        break;
 
-            } else if (choice == 3) {
-                System.out.println(cid + " " + name + " " + balance);
+                    case 2:
+                        System.out.print("Enter CID: ");
+                        int d_id = sc.nextInt();
 
-            } else {
-                break;
+                        Customer d = findCustomer(list, d_id);
+                        if (d == null)
+                            throw new BankException("Customer not found");
+
+                        System.out.print("Enter deposit: ");
+                        d.deposit(sc.nextDouble());
+
+                        System.out.println("Deposited!");
+                        break;
+
+                    case 3:
+                        System.out.print("Enter CID: ");
+                        int w_id = sc.nextInt();
+
+                        Customer w = findCustomer(list, w_id);
+                        if (w == null)
+                            throw new BankException("Customer not found");
+
+                        System.out.print("Enter withdraw: ");
+                        w.withdraw(sc.nextDouble());
+
+                        System.out.println("Withdrawn!");
+                        break;
+
+                    case 4:
+                        for (Customer cust : list)
+                            cust.display();
+                        break;
+                }
+
+            } catch (BankException e) {
+                System.out.println("Error: " + e.getMessage());
             }
-        }
 
-        try {
-            FileWriter fw = new FileWriter("bank.txt", true);
-            fw.write(cid + " " + name + " " + balance + "\n");
-            fw.close();
-        } catch (Exception e) {
-            System.out.println("File error");
-        }
+        } while (choice != 5);
 
         sc.close();
+    }
+
+    static Customer findCustomer(ArrayList<Customer> list, int cid) {
+        for (Customer c : list) {
+            if (c.cid == cid)
+                return c;
+        }
+        return null;
     }
 }
